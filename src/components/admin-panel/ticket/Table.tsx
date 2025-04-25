@@ -100,7 +100,6 @@ export default function Table({ ticketType }: TableProps) {
 
   const handleOpenModal = async (ticket: Ticket) => {
     try {
-      // به جای بازیابی وضعیت فعلی تیکت از سرور، می‌توانیم یک پارامتر includeMessages اضافه کنیم
       const response = await axios.get(
         `https://109.230.200.230:7890/api/v1/Admins/Tickets/${ticket.ticketId}/Messages`,
         {
@@ -115,7 +114,6 @@ export default function Table({ ticketType }: TableProps) {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        // اطمینان حاصل کنیم که فیلد fromAdmin به درستی تنظیم شده است در API
         sender: msg.fromAdmin ? "support" : "user",
         attachment: msg.hasAttachment ? msg.id : undefined,
       }));
@@ -130,17 +128,17 @@ export default function Table({ ticketType }: TableProps) {
     }
   };
 
-  // در Table.js، بعد از بستن تیکت یا مدال
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTicket(null);
-    // به‌روزرسانی لیست تیکت‌ها
     fetchTickets();
   };
 
-  const handleCloseTicket = async (ticketId) => {
+  const handleCloseTicket = async (ticketId: string) => {
+    console.log(`Closing ticket ${ticketId}`);
+    
     try {
-      // ارسال درخواست API برای بستن تیکت
+      // Call API to close ticket
       await axios.delete(
         `https://109.230.200.230:7890/api/v1/Admins/Tickets/${ticketId}/Close`,
         {
@@ -148,20 +146,20 @@ export default function Table({ ticketType }: TableProps) {
         }
       );
 
-      // بروزرسانی وضعیت تیکت در state
+      // Update ticket status in state
       setSelectedTicket((prev) =>
         prev ? { ...prev, status: "closed" } : null
       );
 
-      // بروزرسانی لیست تیکت‌ها
+      // Refresh tickets list
       fetchTickets();
     } catch (error) {
-      console.error("خطا در بستن تیکت:", error);
+      console.error("Error closing ticket:", error);
     }
   };
 
-  const handleSendMessage = async (ticketId, text, sender) => {
-    // ابتدا پیام را به صورت موقت نمایش می‌دهیم
+  const handleSendMessage = async (ticketId: string, text: string, sender: "support" | "user") => {
+    // First show message temporarily
     setSelectedTicket((prev) =>
       prev
         ? {
@@ -169,11 +167,7 @@ export default function Table({ ticketType }: TableProps) {
             messages: [
               ...prev.messages,
               {
-
-                id: `${Date.now()}`,
-
-                id: `temp-${Date.now()}`, // ایجاد یک ID موقت
-
+                id: `temp-${Date.now()}`,
                 text,
                 time: new Date().toLocaleTimeString([], {
                   hour: "2-digit",
@@ -186,12 +180,7 @@ export default function Table({ ticketType }: TableProps) {
         : null
     );
 
-
-  const handleCloseTicket = (ticketId: string) => {
-    console.log(`Closing ticket ${ticketId}`);
-    // Add API call or state update logic here
-
-    // اگر فرستنده ادمین است، پیام را به سرور ارسال می‌کنیم
+    // If sender is admin, send message to server
     if (sender === "support") {
       try {
         const formData = new FormData();
@@ -205,8 +194,7 @@ export default function Table({ ticketType }: TableProps) {
           }
         );
 
-        // پس از ارسال موفق، تیکت‌ها را مجدداً بارگذاری می‌کنیم
-        // یا می‌توانیم فقط وضعیت تیکت را به "answered" تغییر دهیم
+        // Update tickets status after successful send
         setTickets((prevTickets) =>
           prevTickets.map((ticket) =>
             ticket.ticketId === ticketId
@@ -215,8 +203,7 @@ export default function Table({ ticketType }: TableProps) {
           )
         );
       } catch (error) {
-        console.error("خطا در ارسال پیام:", error);
-        // در صورت خطا، می‌توانیم پیام موقت را حذف کنیم یا به کاربر اطلاع دهیم
+        console.error("Error sending message:", error);
       }
     }
   };
@@ -328,7 +315,7 @@ export default function Table({ ticketType }: TableProps) {
               ticketStatus={selectedTicket.status}
               messages={selectedTicket.messages}
               onSendMessage={(text) =>
-                handleSendMessage(selectedTicket.ticketId, text)
+                handleSendMessage(selectedTicket.ticketId, text, "support")
               }
               onCloseTicket={() => handleCloseTicket(selectedTicket.ticketId)}
               onClose={handleCloseModal}

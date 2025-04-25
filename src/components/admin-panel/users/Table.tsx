@@ -4,7 +4,6 @@ import axios, { AxiosError } from "axios";
 import { LuUserRoundX } from "react-icons/lu";
 import { SlEye } from "react-icons/sl";
 
-
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import Image from "next/image";
 
@@ -60,16 +59,20 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
           `https://109.230.200.230:7890/api/v1/Admins/Users?page=${currentPage}&pageSize=${pageSize}&userType=${userTypeFilter}&orderBy=CreationTime&sortOrder=DESC`,
           { withCredentials: true }
         );
-        
+
         // بررسی وجود هدر تعداد کل آیتم‌ها
         let totalCount = 0;
-        
+
         // اگر هدر x-total-count وجود دارد، از آن استفاده کن
-        if (response.headers['x-total-count']) {
-          totalCount = parseInt(response.headers['x-total-count'], 10);
+        if (response.headers["x-total-count"]) {
+          totalCount = parseInt(response.headers["x-total-count"], 10);
         }
         // اگر تعداد کل در بدنه پاسخ وجود دارد (بسته به API شما)
-        else if (response.data && typeof response.data === 'object' && 'totalCount' in response.data) {
+        else if (
+          response.data &&
+          typeof response.data === "object" &&
+          "totalCount" in response.data
+        ) {
           // اگر API کل اطلاعات را در یک آبجکت با فیلدهای data و totalCount بر می‌گرداند
           const result = response.data as unknown as ApiResult;
           totalCount = result.totalCount;
@@ -78,7 +81,7 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
         else {
           totalCount = response.data.length;
         }
-        
+
         setTotalUsers(totalCount);
 
         const formattedData: UserData[] = await Promise.all(
@@ -97,7 +100,9 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
 
                 profileImage = URL.createObjectURL(imageResponse.data);
               } catch (imgError: AxiosError | Error) {
-                console.error(`خطا در دریافت عکس پروفایل کاربر ${item.id}: ${imgError.message}`);
+                console.error(
+                  `خطا در دریافت عکس پروفایل کاربر ${item.id}: ${imgError.message}`
+                );
               }
             }
 
@@ -119,20 +124,18 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
         // فرض می‌کنیم API تعداد کل کاربران را در هدر یا بدنه پاسخ برمی‌گرداند
         // اگر API تعداد کل را برمی‌گرداند، باید آن را اینجا تنظیم کنیم
         setTotalUsers(68); // این مقدار باید از API گرفته شود (برای مثال از هدر یا بدنه پاسخ)
-      } catch (error: AxiosError | Error | unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'خطای ناشناخته';
-        setError(`خطا در بارگذاری داده‌ها: ${errorMessage}`);
-
-      } catch (error: any) {
-        setError(`خطا در بارگذاری داده‌ها: ${error.message}`);
-
+      } catch (error) {
+        if (error instanceof Error) {
+          setError(`خطا در بارگذاری داده‌ها: ${error.message}`);
+        } else {
+          setError("خطا در بارگذاری داده‌ها: خطای ناشناخته");
+        }
       }
     };
 
     fetchData();
 
-
-    // cleanup برای آزادساز
+    // cleanup برای آزادسازی
     return () => {
       // Clean up blob URLs
       info.forEach((item) => {
@@ -142,9 +145,6 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
       });
     };
   }, [currentPage, userTypeFilter, pageSize]); // Added pageSize to dependency array
-
-  }, [currentPage, userTypeFilter, pageSize]);
-
 
   const handleCheckboxChange = (id: string) => {
     setSelectedIds((prev) => {
@@ -172,11 +172,12 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
       );
       setInfo((prevInfo) => prevInfo.filter((item) => item.id !== selectedUser.id));
       // کاهش تعداد کل کاربران پس از حذف
-      setTotalUsers(prev => Math.max(0, prev - 1));
+      setTotalUsers((prev) => Math.max(0, prev - 1));
       setIsModalOpen(false);
       setSelectedUser(null);
     } catch (error: AxiosError | Error | unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'خطای ناشناخته';
+      const errorMessage =
+        error instanceof Error ? error.message : "خطای ناشناخته";
       setError(`خطا در بن کردن کاربر: ${errorMessage}`);
       setIsModalOpen(false);
     }
@@ -233,12 +234,12 @@ export default function Table({ onSelectUsers, userTypeFilter }: TableProps) {
                 <td>{item.row}</td>
                 <td>{item.date}</td>
                 <td className="flex items-center gap-2">
-                  <Image 
-                    src={item.image} 
-                    alt="profile" 
-                    width={24} 
-                    height={24} 
-                    className="object-cover rounded-full" 
+                  <Image
+                    src={item.image}
+                    alt="profile"
+                    width={24}
+                    height={24}
+                    className="object-cover rounded-full"
                   />
                   <span>{item.name}</span>
                 </td>
